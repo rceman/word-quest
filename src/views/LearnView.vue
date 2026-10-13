@@ -12,7 +12,8 @@ const lesson = computed(
   () => LESSONS.find((l) => l.id === props.lessonId) ?? LESSONS[0],
 );
 
-const caps = ref(false);
+// Page 1: pic — LV — EN — speaker. Page 2: pic — EN CAPS → LV, no audio.
+const page = ref(1);
 
 // The whole list is on screen at once — every word counts as "seen" on view.
 watch(
@@ -38,34 +39,40 @@ function start() {
         </svg>
       </button>
       <span class="quiz-mode">Iepazīsti vārdus · Lesson {{ lesson.id }}</span>
-      <span class="topbar-right">
-        <button
-          type="button"
-          class="caps-toggle"
-          :class="{ 'caps-toggle--on': caps }"
-          :aria-pressed="caps"
-          :aria-label="caps ? 'Parādīt mazos burtus' : 'Parādīt lielos burtus'"
-          @click="caps = !caps"
-        >{{ caps ? 'Aa' : 'ABC' }}</button>
-        <span class="topbar-count">{{ lesson.words.length }} vārdi</span>
-      </span>
+      <span class="topbar-count">{{ page }}/2</span>
     </header>
 
-    <main>
+    <main v-if="page === 1">
       <ul class="wordlist" role="list">
         <li v-for="w in lesson.words" :key="w.id" class="wordlist__row">
           <span class="wordlist__art" aria-hidden="true"><WordArt :word="w" /></span>
           <span class="wordlist__text">
             <span class="wordlist__lv">{{ w.lv }}</span>
-            <span class="wordlist__en" :class="{ 'wordlist__en--caps': caps }" lang="en">{{ w.en }}</span>
+            <span class="wordlist__en" lang="en">{{ w.en }}</span>
           </span>
           <SpeakerButton :text="w.en" />
         </li>
       </ul>
     </main>
 
+    <main v-else>
+      <ul class="wordlist" role="list">
+        <li v-for="w in lesson.words" :key="w.id" class="wordlist__row">
+          <span class="wordlist__art" aria-hidden="true"><WordArt :word="w" /></span>
+          <span class="wordlist__text">
+            <span class="wordlist__en wordlist__en--caps" lang="en">{{ w.en }}</span>
+            <span class="wordlist__arrow" aria-hidden="true">→</span>
+            <span class="wordlist__lv wordlist__lv--recall">{{ w.lv }}</span>
+          </span>
+        </li>
+      </ul>
+    </main>
+
     <footer class="bottom-cta">
-      <button type="button" class="btn btn--primary btn--wide" @click="start">
+      <button v-if="page === 1" type="button" class="btn btn--primary btn--wide" @click="page = 2">
+        Tālāk ▶
+      </button>
+      <button v-else type="button" class="btn btn--primary btn--wide" @click="start">
         Uz viktorīnu ▶
       </button>
     </footer>
