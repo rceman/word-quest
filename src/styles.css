@@ -1040,6 +1040,23 @@ button:disabled {
   text-align: right;
 }
 
+/* Landscape (e.g. iPad sideways): two columns so the whole list fits */
+@media (orientation: landscape) {
+  .shell {
+    max-width: 1240px;
+  }
+
+  .wordlist {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    align-content: start;
+  }
+
+  .wordlist__row {
+    min-width: 0;
+  }
+}
+
 @media (max-width: 430px) {
   .wordlist__text {
     flex-direction: column;
