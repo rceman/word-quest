@@ -538,6 +538,20 @@ button:disabled {
   font-family: var(--font-display);
 }
 
+.spell-art {
+  display: flex;
+  justify-content: center;
+  margin: 6px auto 2px;
+  max-width: 220px;
+}
+
+.spell-art svg,
+.spell-art img {
+  max-height: 150px;
+  width: auto;
+  max-width: 100%;
+}
+
 .prompt-hint {
   text-align: center;
   color: var(--ink-soft);

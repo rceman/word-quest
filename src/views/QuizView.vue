@@ -235,6 +235,9 @@ const total = computed(() => session.value?.queue.length ?? 0);
 
       <!-- MODE C: build the word -->
       <template v-else>
+        <div class="spell-art" aria-hidden="true">
+          <WordArt :word="qWord" />
+        </div>
         <div class="prompt-row">
           <h2 class="prompt-lv">{{ qWord.lv }}</h2>
         </div>
