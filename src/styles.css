@@ -718,7 +718,8 @@ button:disabled {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
-  min-height: 62px;
+  align-items: center;
+  min-height: 80px;
   padding: 10px;
   border-radius: var(--radius);
   border: 3px dashed var(--edge);
