@@ -130,6 +130,10 @@ function next() {
     resetPerQuestion();
   } else {
     app.lastSession = s;
+    if (props.mode === 'review') {
+      app.reviewWordIds = [];
+      app.reviewIsRetry = false;
+    }
     navigate({ name: 'results' });
   }
 }
