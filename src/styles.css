@@ -277,6 +277,12 @@ button:disabled {
   margin-top: 18px;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .icon-btn {
   width: 56px;
   height: 56px;
@@ -294,6 +300,11 @@ button:disabled {
 .icon-btn:active:not(:disabled) {
   transform: translateY(2px);
   box-shadow: none;
+}
+
+.icon-btn--danger {
+  border-color: var(--bad-edge);
+  color: var(--bad-ink);
 }
 
 .icon-btn[aria-pressed='true'] {
@@ -1074,27 +1085,43 @@ button:disabled {
     font-size: 1.15rem;
   }
 
-  /* Home: 3 compact cards in one row so all + CTA fit */
+  /* Home: compact single column so all 3 cards + CTA fit */
+  .topbar {
+    margin-bottom: 6px;
+  }
+
+  .brand-badge {
+    width: 44px;
+    height: 44px;
+  }
+
   .brand-badge svg {
-    width: 40px;
-    height: 40px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .brand h1 {
+    font-size: 1.3rem;
+  }
+
+  .brand .subtitle {
+    font-size: 0.85rem;
   }
 
   .section-title {
-    margin: 4px 0 10px;
-    font-size: 1.15rem;
+    margin: 2px 0 8px;
+    font-size: 1.1rem;
   }
 
   .lesson-list {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
   }
 
   .lesson-card {
-    padding: 10px 12px;
-    margin-bottom: 0;
-    gap: 10px;
+    padding: 8px 14px;
+    margin-bottom: 8px;
+    gap: 12px;
   }
 
   .lesson-card__icon {
@@ -1105,17 +1132,46 @@ button:disabled {
   }
 
   .lesson-card__title {
-    font-size: 0.98rem;
+    font-size: 1rem;
   }
 
   .lesson-card__meta {
     font-size: 0.85rem;
   }
 
+  .progress-track {
+    height: 9px;
+    margin-top: 4px;
+  }
+
   .lesson-card__go {
     width: 40px;
     height: 40px;
     font-size: 1.1rem;
+  }
+
+  .btn-row {
+    margin-top: 8px;
+  }
+
+  .btn {
+    min-height: 48px;
+    padding: 8px 22px;
+    font-size: 1rem;
+  }
+
+  .btn--primary {
+    font-size: 1.15rem;
+    padding: 10px 32px;
+  }
+
+  .btn--small {
+    min-height: 42px;
+    padding: 6px 14px;
+  }
+
+  .center.muted {
+    margin-top: 4px !important;
   }
 
   /* Quiz prompts: shorter so questions + options fit */

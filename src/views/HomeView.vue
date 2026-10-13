@@ -65,6 +65,40 @@ function confirmReset() {
           <p class="subtitle">Unit 1</p>
         </div>
       </div>
+      <div class="topbar-actions">
+      <button
+        type="button"
+        class="icon-btn"
+        aria-label="Mans progress"
+        title="Mans progress"
+        @click="navigate({ name: 'progress' })"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 20V10M10 20V4M16 20v-8M22 20H2" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
+        aria-label="Kā instalēt?"
+        title="Kā instalēt?"
+        @click="showInstall = true"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3v11m0 0l-4-4m4 4l4-4M4 21h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="icon-btn icon-btn--danger"
+        aria-label="Atiestatīt progresu"
+        title="Atiestatīt progresu"
+        @click="showReset = true"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 7h16M9 7V4h6v3m-8 0l1 13h8l1-13" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
       <button
         type="button"
         class="icon-btn"
@@ -97,6 +131,7 @@ function confirmReset() {
           />
         </svg>
       </button>
+      </div>
     </header>
 
     <div v-if="!progress.persistent" class="banner" role="alert">
@@ -158,24 +193,6 @@ function confirmReset() {
         {{ dueCount ? `${dueCount} vārdi gaida atkārtošanas` : 'Nav vārdu, ko atkārtot — visi apgūti!' }}
       </p>
 
-      <div class="btn-row">
-        <button type="button" class="btn btn--ghost" @click="navigate({ name: 'progress' })">
-          Mans progress
-        </button>
-        <button type="button" class="btn btn--ghost" @click="showInstall = true">
-          Kā instalēt?
-        </button>
-      </div>
-      <div class="btn-row">
-        <button
-          type="button"
-          class="btn btn--ghost btn--small"
-          style="border-color: var(--bad-edge); color: var(--bad-ink)"
-          @click="showReset = true"
-        >
-          Atiestatīt progresu
-        </button>
-      </div>
     </main>
 
     <InstallHelp v-if="showInstall" @close="showInstall = false" />
