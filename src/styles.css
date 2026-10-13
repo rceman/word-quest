@@ -962,3 +962,78 @@ button:disabled {
     font-size: 2rem;
   }
 }
+
+/* word list (Iepazīsti vārdus) */
+
+.wordlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wordlist__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 2px solid var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.wordlist__art {
+  flex: 0 0 72px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wordlist__art svg,
+.wordlist__art img {
+  max-width: 72px;
+  max-height: 56px;
+}
+
+.wordlist__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.wordlist__en {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: var(--navy-deep);
+}
+
+.wordlist__lv {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--teal-deep);
+}
+
+.topbar-count {
+  font-weight: 800;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.bottom-cta {
+  position: sticky;
+  bottom: 0;
+  padding: 12px 0 calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(255, 247, 230, 0), var(--bg) 40%);
+}
+
+.btn--wide {
+  width: 100%;
+}
