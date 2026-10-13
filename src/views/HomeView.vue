@@ -107,6 +107,7 @@ function confirmReset() {
     <main>
       <h2 class="section-title">Izvēlies nodarbību</h2>
 
+      <div class="lesson-list">
       <button
         v-for="lesson in LESSONS"
         :key="lesson.id"
@@ -141,6 +142,7 @@ function confirmReset() {
         </span>
         <span class="lesson-card__go" aria-hidden="true">▶</span>
       </button>
+      </div>
 
       <button
         type="button"

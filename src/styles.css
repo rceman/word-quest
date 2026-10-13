@@ -1044,18 +1044,130 @@ button:disabled {
 @media (orientation: landscape) {
   .shell {
     max-width: 1240px;
+    padding-top: calc(8px + env(safe-area-inset-top));
+  }
+
+  .topbar {
+    margin-bottom: 8px;
   }
 
   .wordlist {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     align-content: start;
+    gap: 8px;
   }
 
   .wordlist__row {
     min-width: 0;
+    padding: 8px 12px;
   }
 
+  .wordlist__art {
+    flex-basis: 60px;
+    height: 48px;
+  }
+
+  .wordlist__en,
+  .wordlist__lv {
+    font-size: 1.15rem;
+  }
+
+  /* Home: 3 compact cards in one row so all + CTA fit */
+  .brand-badge svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .section-title {
+    margin: 4px 0 10px;
+    font-size: 1.15rem;
+  }
+
+  .lesson-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .lesson-card {
+    padding: 10px 12px;
+    margin-bottom: 0;
+    gap: 10px;
+  }
+
+  .lesson-card__icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 1.4rem;
+  }
+
+  .lesson-card__title {
+    font-size: 0.98rem;
+  }
+
+  .lesson-card__meta {
+    font-size: 0.85rem;
+  }
+
+  .lesson-card__go {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  /* Quiz prompts: shorter so questions + options fit */
+  .prompt-en {
+    font-size: 1.8rem;
+  }
+
+  .prompt-lv {
+    font-size: 1.5rem;
+  }
+
+  .prompt-hint {
+    margin-bottom: 8px;
+  }
+
+  /* Mode B: 4 pictures in one row */
+  .pic-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .pic-btn {
+    min-height: 0;
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .pic-btn__art {
+    height: 110px;
+    overflow: hidden;
+  }
+
+  .pic-btn__art svg,
+  .pic-btn__art img {
+    max-height: 110px;
+  }
+
+  /* Mode C: smaller art so tiles + CTA fit */
+  .spell-art {
+    margin: 2px auto 0;
+  }
+
+  .spell-art svg,
+  .spell-art img {
+    max-height: 86px;
+  }
+
+  .feedback {
+    margin-top: 10px;
+    padding: 10px 14px;
+    font-size: 1.1rem;
+  }
 }
 
 @media (max-width: 430px) {
