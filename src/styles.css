@@ -1017,10 +1017,10 @@ button:disabled {
 
 .wordlist__lv {
   flex: 1;
-  font-weight: 700;
-  font-size: 1.05rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
   color: var(--teal-deep);
-  text-align: right;
 }
 
 @media (max-width: 430px) {

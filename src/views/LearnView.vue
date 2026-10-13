@@ -44,8 +44,8 @@ function start() {
         <li v-for="w in lesson.words" :key="w.id" class="wordlist__row">
           <span class="wordlist__art" aria-hidden="true"><WordArt :word="w" /></span>
           <span class="wordlist__text">
-            <span class="wordlist__en" lang="en">{{ w.en }}</span>
             <span class="wordlist__lv">{{ w.lv }}</span>
+            <span class="wordlist__en" lang="en">{{ w.en }}</span>
           </span>
           <SpeakerButton :text="w.en" />
         </li>
