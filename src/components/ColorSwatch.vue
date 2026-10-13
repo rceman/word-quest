@@ -9,7 +9,7 @@ defineProps<{ word: WordEntry }>();
        only carrier of meaning. -->
   <svg
     class="swatch-svg"
-    viewBox="0 0 200 160"
+    viewBox="-8 -8 216 176"
     role="img"
     :aria-label="`${word.lv} — ${word.en}`"
   >
