@@ -1002,8 +1002,8 @@ button:disabled {
 .wordlist__text {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 1px;
+  align-items: baseline;
+  gap: 10px;
   min-width: 0;
 }
 
@@ -1012,12 +1012,26 @@ button:disabled {
   font-weight: 800;
   font-size: 1.35rem;
   color: var(--navy-deep);
+  white-space: nowrap;
 }
 
 .wordlist__lv {
+  flex: 1;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: var(--teal-deep);
+  text-align: right;
+}
+
+@media (max-width: 430px) {
+  .wordlist__text {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+  .wordlist__lv {
+    text-align: left;
+  }
 }
 
 .topbar-count {
