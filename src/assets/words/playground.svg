@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160">
+  <!-- playground scene -->
+  <rect x="10" y="14" width="180" height="118" rx="8" fill="#cdeafe" stroke="#2f3a4e" stroke-width="3.5"/>
+  <path d="M10 110 Q60 96 110 108 T190 106 V132 H10 Z" fill="#7ec96f" stroke="#2f3a4e" stroke-width="3"/>
+  <circle cx="34" cy="96" r="14" fill="#4da35a" stroke="#2f3a4e" stroke-width="3"/>
+  <circle cx="168" cy="92" r="16" fill="#4da35a" stroke="#2f3a4e" stroke-width="3"/>
+  <!-- slide -->
+  <path d="M96 44 L96 96" stroke="#3b8fe3" stroke-width="7" stroke-linecap="round"/>
+  <path d="M96 44 L96 96" stroke="#2f3a4e" stroke-width="2.4" fill="none"/>
+  <path d="M96 46 Q120 46 128 60 L112 96 Q108 104 98 102" fill="#f7d038" stroke="#2f3a4e" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M96 44 L138 44" stroke="#e5484d" stroke-width="7" stroke-linecap="round"/>
+  <path d="M96 44 L138 44" stroke="#2f3a4e" stroke-width="2.4" fill="none"/>
+  <path d="M138 44 L138 98" stroke="#e5484d" stroke-width="7" stroke-linecap="round"/>
+  <path d="M138 44 L138 98" stroke="#2f3a4e" stroke-width="2.4" fill="none"/>
+  <path d="M118 60 h14 M118 72 h16 M118 84 h17" stroke="#2f3a4e" stroke-width="3" stroke-linecap="round"/>
+  <!-- swing -->
+  <path d="M40 100 L52 52 L84 52 L96 100" fill="none" stroke="#8a5a2b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M40 100 L52 52 L84 52 L96 100" fill="none" stroke="#2f3a4e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60 52 L58 84 M76 52 L78 84" stroke="#2f3a4e" stroke-width="2.5"/>
+  <rect x="56" y="84" width="24" height="7" rx="3" fill="#e5484d" stroke="#2f3a4e" stroke-width="2.5"/>
+</svg>
