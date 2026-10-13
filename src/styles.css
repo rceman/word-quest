@@ -1055,6 +1055,15 @@ button:disabled {
   .wordlist__row {
     min-width: 0;
   }
+
+  /* LV and EN sit side by side instead of stretching apart */
+  .wordlist__lv {
+    flex: none;
+  }
+
+  .wordlist__lv--recall {
+    margin-left: auto;
+  }
 }
 
 @media (max-width: 430px) {
