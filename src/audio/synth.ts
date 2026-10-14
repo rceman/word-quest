@@ -116,13 +116,13 @@ function env(g: GainNode, t: number, peak: number, attack: number, decay: number
   g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
 }
 
-function osc(ctx: Ctx, type: OscillatorType, f: number, t: number, dur: number, peak = 0.5): void {
+function osc(ctx: Ctx, type: OscillatorType, f: number, t: number, dur: number, peak = 0.5, dest: AudioNode = ctx.destination): void {
   const o = ctx.createOscillator();
   const g = ctx.createGain();
   o.type = type;
   o.frequency.setValueAtTime(f, t);
   env(g, t, peak, 0.005, dur);
-  o.connect(g).connect(ctx.destination);
+  o.connect(g).connect(dest);
   o.start(t);
   o.stop(t + dur + 0.1);
 }
@@ -137,7 +137,7 @@ function noiseBuf(ctx: Ctx): AudioBuffer {
 
 let sharedNoise: AudioBuffer | null = null;
 
-function noise(ctx: Ctx, t: number, dur: number, peak: number, filterFreq: number, type: BiquadFilterType = 'highpass'): void {
+function noise(ctx: Ctx, t: number, dur: number, peak: number, filterFreq: number, type: BiquadFilterType = 'highpass', dest: AudioNode = ctx.destination): void {
   if (!sharedNoise) sharedNoise = noiseBuf(ctx);
   const src = ctx.createBufferSource();
   src.buffer = sharedNoise;
@@ -147,12 +147,15 @@ function noise(ctx: Ctx, t: number, dur: number, peak: number, filterFreq: numbe
   f.frequency.value = filterFreq;
   const g = ctx.createGain();
   env(g, t, peak, 0.003, dur);
-  src.connect(f).connect(g).connect(ctx.destination);
+  src.connect(f).connect(g).connect(dest);
   src.start(t, Math.random());
   src.stop(t + dur + 0.1);
 }
 
-export function playSound(ctx: Ctx, id: string, t: number, stepDur: number): void {
+export function playSound(ctx: Ctx, id: string, t: number, stepDur: number, vol = 1): void {
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(vol, t);
+  out.connect(ctx.destination);
   switch (id) {
     case 'kick': {
       const o = ctx.createOscillator();
@@ -161,22 +164,22 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number): voi
       o.frequency.setValueAtTime(160, t);
       o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
       env(g, t, 0.9, 0.002, 0.22);
-      o.connect(g).connect(ctx.destination);
+      o.connect(g).connect(out);
       o.start(t);
       o.stop(t + 0.3);
       return;
     }
     case 'snare':
-      noise(ctx, t, 0.12, 0.5, 1800);
-      osc(ctx, 'triangle', 190, t, 0.08, 0.35);
+      noise(ctx, t, 0.12, 0.5, 1800, 'highpass', out);
+      osc(ctx, 'triangle', 190, t, 0.08, 0.35, out);
       return;
     case 'hihat':
-      noise(ctx, t, 0.04, 0.3, 7000);
+      noise(ctx, t, 0.04, 0.3, 7000, 'highpass', out);
       return;
     case 'clap':
-      noise(ctx, t, 0.03, 0.4, 2500);
-      noise(ctx, t + 0.03, 0.03, 0.4, 2500);
-      noise(ctx, t + 0.06, 0.12, 0.45, 2500);
+      noise(ctx, t, 0.03, 0.4, 2500, 'highpass', out);
+      noise(ctx, t + 0.03, 0.03, 0.4, 2500, 'highpass', out);
+      noise(ctx, t + 0.06, 0.12, 0.45, 2500, 'highpass', out);
       return;
     case 'fx-bubble': {
       const o = ctx.createOscillator();
@@ -185,7 +188,7 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number): voi
       o.frequency.setValueAtTime(300, t);
       o.frequency.exponentialRampToValueAtTime(950, t + 0.12);
       env(g, t, 0.45, 0.01, 0.15);
-      o.connect(g).connect(ctx.destination);
+      o.connect(g).connect(out);
       o.start(t);
       o.stop(t + 0.3);
       return;
@@ -197,14 +200,14 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number): voi
       o.frequency.setValueAtTime(900, t);
       o.frequency.exponentialRampToValueAtTime(90, t + 0.18);
       env(g, t, 0.35, 0.005, 0.2);
-      o.connect(g).connect(ctx.destination);
+      o.connect(g).connect(out);
       o.start(t);
       o.stop(t + 0.3);
       return;
     }
     case 'fx-coin':
-      osc(ctx, 'sine', 988, t, 0.06, 0.4);
-      osc(ctx, 'sine', 1319, t + 0.07, 0.18, 0.4);
+      osc(ctx, 'sine', 988, t, 0.06, 0.4, out);
+      osc(ctx, 'sine', 1319, t + 0.07, 0.18, 0.4, out);
       return;
     case 'fx-boing': {
       const o = ctx.createOscillator();
@@ -217,7 +220,7 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number): voi
       lg.gain.setValueAtTime(60, t);
       lfo.connect(lg).connect(o.frequency);
       env(g, t, 0.45, 0.005, 0.3);
-      o.connect(g).connect(ctx.destination);
+      o.connect(g).connect(out);
       o.start(t);
       lfo.start(t);
       o.stop(t + 0.4);
@@ -236,14 +239,14 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number): voi
       f.Q.value = 2;
       const g = ctx.createGain();
       env(g, t, 0.4, 0.02, 0.28);
-      src.connect(f).connect(g).connect(ctx.destination);
+      src.connect(f).connect(g).connect(out);
       src.start(t, Math.random());
       src.stop(t + 0.4);
       return;
     }
     case 'fx-pop':
-      osc(ctx, 'sine', 520, t, 0.05, 0.5);
-      noise(ctx, t, 0.03, 0.25, 4000);
+      osc(ctx, 'sine', 520, t, 0.05, 0.5, out);
+      noise(ctx, t, 0.03, 0.25, 4000, 'highpass', out);
       return;
     default:
       break;
@@ -253,8 +256,8 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number): voi
   if (f === undefined) return;
 
   if (id.startsWith('bass-')) {
-    osc(ctx, 'triangle', f, t, Math.min(stepDur * 0.9, 0.4), 0.55);
-    osc(ctx, 'sine', f / 2, t, 0.2, 0.3);
+    osc(ctx, 'triangle', f, t, Math.min(stepDur * 0.9, 0.4), 0.55, out);
+    osc(ctx, 'sine', f / 2, t, 0.2, 0.3, out);
   } else if (id.startsWith('pad-')) {
     const dur = stepDur * 2.2;
     const o1 = ctx.createOscillator();
@@ -272,13 +275,13 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number): voi
     g.gain.linearRampToValueAtTime(0.0001, t + dur);
     o1.connect(flt);
     o2.connect(flt);
-    flt.connect(g).connect(ctx.destination);
+    flt.connect(g).connect(out);
     o1.start(t);
     o2.start(t);
     o1.stop(t + dur + 0.1);
     o2.stop(t + dur + 0.1);
   } else if (id.startsWith('mel-')) {
-    osc(ctx, 'sine', f, t, 0.35, 0.5);
-    osc(ctx, 'sine', f * 2, t, 0.15, 0.15);
+    osc(ctx, 'sine', f, t, 0.35, 0.5, out);
+    osc(ctx, 'sine', f * 2, t, 0.15, 0.15, out);
   }
 }

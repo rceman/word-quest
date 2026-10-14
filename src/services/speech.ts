@@ -9,7 +9,7 @@ export interface SpeechService {
   enabled: boolean;
   setEnabled(on: boolean): void;
   /** Speak an English word/phrase. Must be called from a user gesture. */
-  speak(text: string): void;
+  speak(text: string, volume?: number): void;
   stop(): void;
 }
 
@@ -44,7 +44,7 @@ export function createSpeechService(): SpeechService {
       svc.enabled = on;
       if (!on) svc.stop();
     },
-    speak(text: string) {
+    speak(text: string, volume?: number) {
       if (!synth || !svc.enabled) return;
       try {
         synth.cancel();
@@ -54,6 +54,7 @@ export function createSpeechService(): SpeechService {
         if (voice) u.voice = voice;
         u.rate = 0.85;
         u.pitch = 1.05;
+        if (volume !== undefined) u.volume = Math.min(1, Math.max(0, volume));
         synth.speak(u);
       } catch {
         // Speech is best-effort; never let it break a quiz.

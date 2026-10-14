@@ -14,12 +14,18 @@ interface SavedState {
   pick: Record<string, string>;
   /** Per-row note length as a fraction of a step: 1, 0.5 or 0.25. */
   lens: Record<string, number>;
+  /** Per-row volume 0..1. */
+  vols: Record<string, number>;
+  /** Per-group volume 0..1, multiplied with the row volume. */
+  gvols: Record<string, number>;
 }
 
 const bpm = ref(100);
 const cells = reactive<Record<string, boolean[]>>({});
 const pick = reactive<Record<string, string>>({});
 const lens = reactive<Record<string, number>>({});
+const vols = reactive<Record<string, number>>({});
+const gvols = reactive<Record<string, number>>({});
 const playing = ref(false);
 const currentStep = ref(-1);
 
@@ -42,13 +48,22 @@ function load() {
       }
     for (const k of Object.keys(s.pick ?? {})) pick[k] = s.pick[k];
     for (const k of Object.keys(s.lens ?? {})) lens[k] = s.lens[k];
+    for (const k of Object.keys(s.vols ?? {})) vols[k] = s.vols[k];
+    for (const k of Object.keys(s.gvols ?? {})) gvols[k] = s.gvols[k];
   } catch {
     /* corrupted save — start clean */
   }
 }
 
 function save() {
-  const snapshot: SavedState = { bpm: bpm.value, cells: {}, pick: { ...pick }, lens: { ...lens } };
+  const snapshot: SavedState = {
+    bpm: bpm.value,
+    cells: {},
+    pick: { ...pick },
+    lens: { ...lens },
+    vols: { ...vols },
+    gvols: { ...gvols },
+  };
   for (const g of TRACK_GROUPS)
     for (const r of g.rows) snapshot.cells[r.id] = [...(cells[r.id] ?? [])];
   try {
@@ -59,11 +74,18 @@ function save() {
 }
 
 load();
-for (const g of TRACK_GROUPS)
-  for (const r of g.rows) if (lens[r.id] == null) lens[r.id] = 1;
+for (const g of TRACK_GROUPS) {
+  if (gvols[g.id] == null) gvols[g.id] = 1;
+  for (const r of g.rows) {
+    if (lens[r.id] == null) lens[r.id] = 1;
+    if (vols[r.id] == null) vols[r.id] = 1;
+  }
+}
 watch(cells, save, { deep: true });
 watch(pick, save, { deep: true });
 watch(lens, save, { deep: true });
+watch(vols, save, { deep: true });
+watch(gvols, save, { deep: true });
 watch(bpm, save);
 
 // ---------- audio engine ----------
@@ -83,21 +105,35 @@ function randomLetter(): string {
   return String.fromCharCode(65 + Math.floor(Math.random() * 26));
 }
 
+function volFor(groupId: string, rowId: string): number {
+  return (vols[rowId] ?? 1) * (gvols[groupId] ?? 1);
+}
+
+function findRow(rowId: string): { g: (typeof TRACK_GROUPS)[number]; r: (typeof TRACK_GROUPS)[number]['rows'][number] } | null {
+  for (const g of TRACK_GROUPS) {
+    const r = g.rows.find((x) => x.id === rowId);
+    if (r) return { g, r };
+  }
+  return null;
+}
+
 function triggerStep(s: number, when: number) {
   for (const g of TRACK_GROUPS) {
     for (const r of g.rows) {
       if (!cells[r.id]?.[s]) continue;
       const frac = lens[r.id] ?? 1;
+      const vol = volFor(g.id, r.id);
+      if (vol <= 0) continue;
       if (r.kind === 'word' || r.kind === 'letter') {
         const text = pick[r.id] || (r.kind === 'word' ? randomWord() : randomLetter());
-        speech.speak(text);
+        speech.speak(text, vol);
         // Trim spoken audio for short notes: cut the tail of the word.
         const ms = 800 * frac;
         setTimeout(() => {
           if (frac < 1) speech.stop();
         }, ms);
       } else if (ctx) {
-        playSound(ctx, r.id, when, stepDur.value * frac);
+        playSound(ctx, r.id, when, stepDur.value * frac, vol);
       }
     }
   }
@@ -147,8 +183,10 @@ function tapCell(rowId: string, i: number) {
   row[i] = !row[i];
   // Audition the sound immediately on tap-on so kids hear what they placed.
   if (row[i] && ctx) {
-    const def = TRACK_GROUPS.flatMap((g) => g.rows).find((r) => r.id === rowId);
-    if (!def?.kind) playSound(ctx, rowId, ctx.currentTime, stepDur.value * (lens[rowId] ?? 1));
+    const found = findRow(rowId);
+    if (found && !found.r.kind) {
+      playSound(ctx, rowId, ctx.currentTime, stepDur.value * (lens[rowId] ?? 1), volFor(found.g.id, rowId));
+    }
   }
 }
 
@@ -194,7 +232,18 @@ onBeforeUnmount(stop);
       </div>
 
       <section v-for="g in TRACK_GROUPS" :key="g.id" class="track-group">
-        <h3 class="track-group__title">{{ g.title }}</h3>
+        <h3 class="track-group__title">
+          <span>{{ g.title }}</span>
+          <input
+            v-model.number="gvols[g.id]"
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            class="group-vol"
+            :aria-label="`Skaļums grupai ${g.title}`"
+          />
+        </h3>
         <div v-for="r in g.rows" :key="r.id" class="track-row">
           <span class="track-label" :title="r.label">
             {{ r.icon }}
@@ -231,6 +280,16 @@ onBeforeUnmount(stop);
               <option :value="0.5">½</option>
               <option :value="0.25">¼</option>
             </select>
+            <input
+              v-model.number="vols[r.id]"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              class="track-vol"
+              :aria-label="`Skaļums rindai ${r.label}`"
+              @click.stop
+            />
           </span>
           <button
             v-for="i in STEP_COUNT"
