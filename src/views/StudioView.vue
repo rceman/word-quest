@@ -18,6 +18,10 @@ interface SavedState {
   vols: Record<string, number>;
   /** Per-group volume 0..1, multiplied with the row volume. */
   gvols: Record<string, number>;
+  /** Per-note overrides set in the cell editor. */
+  cpick: Record<string, (string | undefined)[]>;
+  clen: Record<string, (number | undefined)[]>;
+  cvol: Record<string, (number | undefined)[]>;
 }
 
 const bpm = ref(100);
@@ -26,8 +30,18 @@ const pick = reactive<Record<string, string>>({});
 const lens = reactive<Record<string, number>>({});
 const vols = reactive<Record<string, number>>({});
 const gvols = reactive<Record<string, number>>({});
+const cpick = reactive<Record<string, (string | undefined)[]>>({});
+const clen = reactive<Record<string, (number | undefined)[]>>({});
+const cvol = reactive<Record<string, (number | undefined)[]>>({});
 const playing = ref(false);
 const currentStep = ref(-1);
+const editing = ref<{ rowId: string; i: number } | null>(null);
+
+const LEN_OPTIONS = [
+  { v: 1, t: '𝅘𝅥' },
+  { v: 0.5, t: '½' },
+  { v: 0.25, t: '¼' },
+];
 
 function ensureRow(id: string): boolean[] {
   if (!cells[id]) cells[id] = Array.from({ length: STEP_COUNT }, () => false);
@@ -50,6 +64,9 @@ function load() {
     for (const k of Object.keys(s.lens ?? {})) lens[k] = s.lens[k];
     for (const k of Object.keys(s.vols ?? {})) vols[k] = s.vols[k];
     for (const k of Object.keys(s.gvols ?? {})) gvols[k] = s.gvols[k];
+    for (const k of Object.keys(s.cpick ?? {})) cpick[k] = s.cpick[k];
+    for (const k of Object.keys(s.clen ?? {})) clen[k] = s.clen[k];
+    for (const k of Object.keys(s.cvol ?? {})) cvol[k] = s.cvol[k];
   } catch {
     /* corrupted save — start clean */
   }
@@ -63,6 +80,9 @@ function save() {
     lens: { ...lens },
     vols: { ...vols },
     gvols: { ...gvols },
+    cpick: { ...cpick },
+    clen: { ...clen },
+    cvol: { ...cvol },
   };
   for (const g of TRACK_GROUPS)
     for (const r of g.rows) snapshot.cells[r.id] = [...(cells[r.id] ?? [])];
@@ -86,6 +106,9 @@ watch(pick, save, { deep: true });
 watch(lens, save, { deep: true });
 watch(vols, save, { deep: true });
 watch(gvols, save, { deep: true });
+watch(cpick, save, { deep: true });
+watch(clen, save, { deep: true });
+watch(cvol, save, { deep: true });
 watch(bpm, save);
 
 // ---------- audio engine ----------
@@ -105,8 +128,9 @@ function randomLetter(): string {
   return String.fromCharCode(65 + Math.floor(Math.random() * 26));
 }
 
-function volFor(groupId: string, rowId: string): number {
-  return (vols[rowId] ?? 1) * (gvols[groupId] ?? 1);
+function volFor(groupId: string, rowId: string, i?: number): number {
+  const rowVol = (i === undefined ? undefined : cvol[rowId]?.[i]) ?? vols[rowId] ?? 1;
+  return rowVol * (gvols[groupId] ?? 1);
 }
 
 function findRow(rowId: string): { g: (typeof TRACK_GROUPS)[number]; r: (typeof TRACK_GROUPS)[number]['rows'][number] } | null {
@@ -121,11 +145,11 @@ function triggerStep(s: number, when: number) {
   for (const g of TRACK_GROUPS) {
     for (const r of g.rows) {
       if (!cells[r.id]?.[s]) continue;
-      const frac = lens[r.id] ?? 1;
-      const vol = volFor(g.id, r.id);
+      const frac = clen[r.id]?.[s] ?? lens[r.id] ?? 1;
+      const vol = volFor(g.id, r.id, s);
       if (vol <= 0) continue;
       if (r.kind === 'word' || r.kind === 'letter') {
-        const text = pick[r.id] || (r.kind === 'word' ? randomWord() : randomLetter());
+        const text = cpick[r.id]?.[s] || pick[r.id] || (r.kind === 'word' ? randomWord() : randomLetter());
         speech.speak(text, vol);
         // Trim spoken audio for short notes: cut the tail of the word.
         const ms = 800 * frac;
@@ -178,16 +202,71 @@ function clearAll() {
   for (const g of TRACK_GROUPS) for (const r of g.rows) cells[r.id] = Array.from({ length: STEP_COUNT }, () => false);
 }
 
+function cellArr<T>(m: Record<string, (T | undefined)[]>, rowId: string): (T | undefined)[] {
+  if (!m[rowId]) m[rowId] = Array.from({ length: STEP_COUNT });
+  return m[rowId];
+}
+
+function openEditor(rowId: string, i: number) {
+  const found = findRow(rowId);
+  if (!found) return;
+  editing.value = { rowId, i };
+  cellArr(clen, rowId);
+  cellArr(cvol, rowId);
+  cellArr(cpick, rowId);
+  if (clen[rowId][i] == null) clen[rowId][i] = lens[rowId] ?? 1;
+  if (cvol[rowId][i] == null) cvol[rowId][i] = vols[rowId] ?? 1;
+  if (found.r.kind && cpick[rowId][i] == null) cpick[rowId][i] = pick[rowId] ?? '';
+}
+
+const editRow = computed(() => (editing.value ? findRow(editing.value.rowId) : null));
+
+function auditionCell() {
+  const e = editing.value;
+  if (!e || !ctx) return;
+  const found = findRow(e.rowId);
+  if (!found) return;
+  const vol = volFor(found.g.id, e.rowId, e.i);
+  if (found.r.kind === 'word' || found.r.kind === 'letter') {
+    const text = cpick[e.rowId]?.[e.i] || pick[e.rowId];
+    if (text) speech.speak(text, vol);
+  } else {
+    playSound(ctx, e.rowId, ctx.currentTime, stepDur.value * (clen[e.rowId]?.[e.i] ?? 1), vol);
+  }
+}
+
+function removeCell() {
+  const e = editing.value;
+  if (!e) return;
+  ensureRow(e.rowId)[e.i] = false;
+  if (cpick[e.rowId]) cpick[e.rowId][e.i] = undefined;
+  if (clen[e.rowId]) clen[e.rowId][e.i] = undefined;
+  if (cvol[e.rowId]) cvol[e.rowId][e.i] = undefined;
+  editing.value = null;
+}
+
+function flagOf(rowId: string, i: number): string {
+  const l = clen[rowId]?.[i] ?? lens[rowId] ?? 1;
+  const p = cpick[rowId]?.[i];
+  let s = '';
+  if (l !== 1) s = l === 0.5 ? '½' : '¼';
+  if (p) s = s ? `${s} ${p}` : p;
+  return s;
+}
+
 function tapCell(rowId: string, i: number) {
   const row = ensureRow(rowId);
-  row[i] = !row[i];
-  // Audition the sound immediately on tap-on so kids hear what they placed.
-  if (row[i] && ctx) {
-    const found = findRow(rowId);
-    if (found && !found.r.kind) {
-      playSound(ctx, rowId, ctx.currentTime, stepDur.value * (lens[rowId] ?? 1), volFor(found.g.id, rowId));
+  if (!row[i]) {
+    row[i] = true;
+    // Audition the sound immediately on tap-on so kids hear what they placed.
+    if (ctx) {
+      const found = findRow(rowId);
+      if (found && !found.r.kind) {
+        playSound(ctx, rowId, ctx.currentTime, stepDur.value * (lens[rowId] ?? 1), volFor(found.g.id, rowId));
+      }
     }
   }
+  openEditor(rowId, i);
 }
 
 onBeforeUnmount(stop);
@@ -270,26 +349,6 @@ onBeforeUnmount(stop);
               </option>
             </select>
             <template v-else>{{ r.label }}</template>
-            <select
-              v-model.number="lens[r.id]"
-              class="track-pick track-pick--len"
-              :aria-label="`Nots garums rindai ${r.label}`"
-              @click.stop
-            >
-              <option :value="1">𝅘𝅥</option>
-              <option :value="0.5">½</option>
-              <option :value="0.25">¼</option>
-            </select>
-            <input
-              v-model.number="vols[r.id]"
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              class="track-vol"
-              :aria-label="`Skaļums rindai ${r.label}`"
-              @click.stop
-            />
           </span>
           <button
             v-for="i in STEP_COUNT"
@@ -306,9 +365,63 @@ onBeforeUnmount(stop);
             :aria-pressed="cells[r.id]?.[i - 1]"
             :aria-label="`${r.label}, solis ${i}`"
             @click="tapCell(r.id, i - 1)"
-          />
+          >
+            <span v-if="cells[r.id]?.[i - 1] && flagOf(r.id, i - 1)" class="cell-flag">{{ flagOf(r.id, i - 1) }}</span>
+          </button>
         </div>
       </section>
+
+      <div v-if="editing && editRow" class="cell-editor" role="dialog" :aria-label="`Skaņas iestatījumi: ${editRow.r.label}`">
+        <div class="cell-editor__head">
+          <strong>{{ editRow.r.icon }} {{ editRow.r.label }} · solis {{ editing.i + 1 }}</strong>
+          <button type="button" class="icon-btn" aria-label="Aizvērt" @click="editing = null">✕</button>
+        </div>
+        <select
+          v-if="editRow.r.kind === 'word'"
+          v-model="cpick[editing.rowId][editing.i]"
+          class="track-pick cell-editor__pick"
+          aria-label="Izvēlies vārdu šai nocei"
+          @change="auditionCell"
+        >
+          <option value="">nejaušs</option>
+          <option v-for="w in UNIT1_WORDS" :key="w.id" :value="w.en">{{ w.en }}</option>
+        </select>
+        <select
+          v-else-if="editRow.r.kind === 'letter'"
+          v-model="cpick[editing.rowId][editing.i]"
+          class="track-pick cell-editor__pick"
+          aria-label="Izvēlies burtu šai nocei"
+          @change="auditionCell"
+        >
+          <option value="">nejaušs</option>
+          <option v-for="c in 26" :key="c" :value="String.fromCharCode(64 + c)">
+            {{ String.fromCharCode(64 + c) }}
+          </option>
+        </select>
+        <div class="cell-editor__lens" role="group" aria-label="Nots garums">
+          <button
+            v-for="o in LEN_OPTIONS"
+            :key="o.v"
+            type="button"
+            :class="{ on: clen[editing.rowId][editing.i] === o.v }"
+            @click="clen[editing.rowId][editing.i] = o.v; auditionCell()"
+          >
+            {{ o.t }}
+          </button>
+        </div>
+        <label class="cell-editor__vol">
+          <span>Skaļums</span>
+          <input
+            v-model.number="cvol[editing.rowId][editing.i]"
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            @change="auditionCell"
+          />
+        </label>
+        <button type="button" class="btn cell-editor__remove" @click="removeCell">🗑️ Noņemt skaņu</button>
+      </div>
     </main>
   </div>
 </template>
