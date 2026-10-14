@@ -10,10 +10,13 @@ const STORAGE_KEY = 'wordquest-studio-v1';
 interface SavedState {
   bpm: number;
   cells: Record<string, boolean[]>;
+  /** Per-row sound pick for 'word'/'letter' tracks; '' = random. */
+  pick: Record<string, string>;
 }
 
 const bpm = ref(100);
 const cells = reactive<Record<string, boolean[]>>({});
+const pick = reactive<Record<string, string>>({});
 const playing = ref(false);
 const currentStep = ref(-1);
 
@@ -34,13 +37,14 @@ function load() {
         const saved = s.cells?.[r.id];
         cells[r.id] = Array.from({ length: STEP_COUNT }, (_, i) => Boolean(saved?.[i]));
       }
+    for (const k of Object.keys(s.pick ?? {})) pick[k] = s.pick[k];
   } catch {
     /* corrupted save — start clean */
   }
 }
 
 function save() {
-  const snapshot: SavedState = { bpm: bpm.value, cells: {} };
+  const snapshot: SavedState = { bpm: bpm.value, cells: {}, pick: { ...pick } };
   for (const g of TRACK_GROUPS)
     for (const r of g.rows) snapshot.cells[r.id] = [...(cells[r.id] ?? [])];
   try {
@@ -52,6 +56,7 @@ function save() {
 
 load();
 watch(cells, save, { deep: true });
+watch(pick, save, { deep: true });
 watch(bpm, save);
 
 // ---------- audio engine ----------
@@ -75,8 +80,8 @@ function triggerStep(s: number, when: number) {
   for (const g of TRACK_GROUPS) {
     for (const r of g.rows) {
       if (!cells[r.id]?.[s]) continue;
-      if (r.kind === 'word') speech.speak(randomWord());
-      else if (r.kind === 'letter') speech.speak(randomLetter());
+      if (r.kind === 'word') speech.speak(pick[r.id] || randomWord());
+      else if (r.kind === 'letter') speech.speak(pick[r.id] || randomLetter());
       else if (ctx) playSound(ctx, r.id, when, stepDur.value);
     }
   }
@@ -175,7 +180,32 @@ onBeforeUnmount(stop);
       <section v-for="g in TRACK_GROUPS" :key="g.id" class="track-group">
         <h3 class="track-group__title">{{ g.title }}</h3>
         <div v-for="r in g.rows" :key="r.id" class="track-row">
-          <span class="track-label" :title="r.label">{{ r.icon }} {{ r.label }}</span>
+          <span class="track-label" :title="r.label">
+            {{ r.icon }}
+            <select
+              v-if="r.kind === 'word'"
+              v-model="pick[r.id]"
+              class="track-pick"
+              :aria-label="`Izvēlies vārdu rindai ${r.label}`"
+              @click.stop
+            >
+              <option value="">nejaušs</option>
+              <option v-for="w in UNIT1_WORDS" :key="w.id" :value="w.en">{{ w.en }}</option>
+            </select>
+            <select
+              v-else-if="r.kind === 'letter'"
+              v-model="pick[r.id]"
+              class="track-pick"
+              :aria-label="`Izvēlies burtu rindai ${r.label}`"
+              @click.stop
+            >
+              <option value="">nejaušs</option>
+              <option v-for="c in 26" :key="c" :value="String.fromCharCode(64 + c)">
+                {{ String.fromCharCode(64 + c) }}
+              </option>
+            </select>
+            <template v-else>{{ r.label }}</template>
+          </span>
           <button
             v-for="i in STEP_COUNT"
             :key="i"

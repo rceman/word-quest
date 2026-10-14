@@ -1392,3 +1392,16 @@ button:disabled {
     gap: 14px;
   }
 }
+
+.track-pick {
+  width: 100%;
+  max-width: 90px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--navy-deep);
+  background: #fff;
+  border: 2px solid var(--edge);
+  border-radius: 8px;
+  padding: 2px;
+  min-height: 34px;
+}
