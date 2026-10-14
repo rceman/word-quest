@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160">
+  <!-- storage cupboard -->
+  <rect x="56" y="30" width="88" height="104" rx="6" fill="#e0a75c" stroke="#2f3a4e" stroke-width="4"/>
+  <rect x="64" y="40" width="34" height="84" rx="4" fill="#edbd7d" stroke="#2f3a4e" stroke-width="3"/>
+  <rect x="102" y="40" width="34" height="84" rx="4" fill="#edbd7d" stroke="#2f3a4e" stroke-width="3"/>
+  <rect x="92" y="72" width="7" height="22" rx="3.5" fill="#7a8391" stroke="#2f3a4e" stroke-width="2.5"/>
+  <rect x="101" y="72" width="7" height="22" rx="3.5" fill="#7a8391" stroke="#2f3a4e" stroke-width="2.5"/>
+  <rect x="60" y="134" width="16" height="10" rx="3" fill="#a5713c" stroke="#2f3a4e" stroke-width="3"/>
+  <rect x="124" y="134" width="16" height="10" rx="3" fill="#a5713c" stroke="#2f3a4e" stroke-width="3"/>
+  <path d="M56 30 L64 22 L136 22 L144 30" fill="#d89a52" stroke="#2f3a4e" stroke-width="3.5" stroke-linejoin="round"/>
+</svg>

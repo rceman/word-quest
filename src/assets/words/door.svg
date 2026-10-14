@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160">
+  <!-- classroom door -->
+  <rect x="62" y="18" width="76" height="124" rx="4" fill="#c98a4e" stroke="#2f3a4e" stroke-width="4"/>
+  <rect x="78" y="30" width="26" height="56" rx="4" fill="#bfe3f7" stroke="#2f3a4e" stroke-width="3.5"/>
+  <path d="M82 40 L98 74 M88 34 L102 60" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+  <rect x="70" y="96" width="60" height="38" rx="4" fill="#b5773a" stroke="#2f3a4e" stroke-width="3"/>
+  <rect x="112" y="104" width="20" height="8" rx="4" fill="#8d929b" stroke="#2f3a4e" stroke-width="2.5"/>
+  <rect x="56" y="142" width="88" height="8" rx="3" fill="#8d929b" stroke="#2f3a4e" stroke-width="3"/>
+</svg>
