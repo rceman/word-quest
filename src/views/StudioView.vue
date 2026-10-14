@@ -22,6 +22,8 @@ interface SavedState {
   cpick: Record<string, (string | undefined)[]>;
   clen: Record<string, (number | undefined)[]>;
   cvol: Record<string, (number | undefined)[]>;
+  /** Per-note pitch offset in semitones (-12..+12). */
+  csemis: Record<string, (number | undefined)[]>;
 }
 
 const bpm = ref(100);
@@ -33,6 +35,7 @@ const gvols = reactive<Record<string, number>>({});
 const cpick = reactive<Record<string, (string | undefined)[]>>({});
 const clen = reactive<Record<string, (number | undefined)[]>>({});
 const cvol = reactive<Record<string, (number | undefined)[]>>({});
+const csemis = reactive<Record<string, (number | undefined)[]>>({});
 const playing = ref(false);
 const currentStep = ref(-1);
 const editing = ref<{ rowId: string; i: number } | null>(null);
@@ -67,6 +70,7 @@ function load() {
     for (const k of Object.keys(s.cpick ?? {})) cpick[k] = s.cpick[k];
     for (const k of Object.keys(s.clen ?? {})) clen[k] = s.clen[k];
     for (const k of Object.keys(s.cvol ?? {})) cvol[k] = s.cvol[k];
+    for (const k of Object.keys(s.csemis ?? {})) csemis[k] = s.csemis[k];
   } catch {
     /* corrupted save — start clean */
   }
@@ -83,6 +87,7 @@ function save() {
     cpick: { ...cpick },
     clen: { ...clen },
     cvol: { ...cvol },
+    csemis: { ...csemis },
   };
   for (const g of TRACK_GROUPS)
     for (const r of g.rows) snapshot.cells[r.id] = [...(cells[r.id] ?? [])];
@@ -109,6 +114,7 @@ watch(gvols, save, { deep: true });
 watch(cpick, save, { deep: true });
 watch(clen, save, { deep: true });
 watch(cvol, save, { deep: true });
+watch(csemis, save, { deep: true });
 watch(bpm, save);
 
 // ---------- audio engine ----------
@@ -147,17 +153,18 @@ function triggerStep(s: number, when: number) {
       if (!cells[r.id]?.[s]) continue;
       const frac = clen[r.id]?.[s] ?? lens[r.id] ?? 1;
       const vol = volFor(g.id, r.id, s);
+      const semis = csemis[r.id]?.[s] ?? 0;
       if (vol <= 0) continue;
       if (r.kind === 'word' || r.kind === 'letter') {
         const text = cpick[r.id]?.[s] || pick[r.id] || (r.kind === 'word' ? randomWord() : randomLetter());
-        speech.speak(text, vol);
+        speech.speak(text, vol, Math.pow(2, semis / 12));
         // Trim spoken audio for short notes: cut the tail of the word.
         const ms = 800 * frac;
         setTimeout(() => {
           if (frac < 1) speech.stop();
         }, ms);
       } else if (ctx) {
-        playSound(ctx, r.id, when, stepDur.value * frac, vol);
+        playSound(ctx, r.id, when, stepDur.value * frac, vol, semis);
       }
     }
   }
@@ -214,8 +221,10 @@ function openEditor(rowId: string, i: number) {
   cellArr(clen, rowId);
   cellArr(cvol, rowId);
   cellArr(cpick, rowId);
+  cellArr(csemis, rowId);
   if (clen[rowId][i] == null) clen[rowId][i] = lens[rowId] ?? 1;
   if (cvol[rowId][i] == null) cvol[rowId][i] = vols[rowId] ?? 1;
+  if (csemis[rowId][i] == null) csemis[rowId][i] = 0;
   if (found.r.kind && cpick[rowId][i] == null) cpick[rowId][i] = pick[rowId] ?? '';
 }
 
@@ -227,11 +236,12 @@ function auditionCell() {
   const found = findRow(e.rowId);
   if (!found) return;
   const vol = volFor(found.g.id, e.rowId, e.i);
+  const semis = csemis[e.rowId]?.[e.i] ?? 0;
   if (found.r.kind === 'word' || found.r.kind === 'letter') {
     const text = cpick[e.rowId]?.[e.i] || pick[e.rowId];
-    if (text) speech.speak(text, vol);
+    if (text) speech.speak(text, vol, Math.pow(2, semis / 12));
   } else {
-    playSound(ctx, e.rowId, ctx.currentTime, stepDur.value * (clen[e.rowId]?.[e.i] ?? 1), vol);
+    playSound(ctx, e.rowId, ctx.currentTime, stepDur.value * (clen[e.rowId]?.[e.i] ?? 1), vol, semis);
   }
 }
 
@@ -242,15 +252,18 @@ function removeCell() {
   if (cpick[e.rowId]) cpick[e.rowId][e.i] = undefined;
   if (clen[e.rowId]) clen[e.rowId][e.i] = undefined;
   if (cvol[e.rowId]) cvol[e.rowId][e.i] = undefined;
+  if (csemis[e.rowId]) csemis[e.rowId][e.i] = undefined;
   editing.value = null;
 }
 
 function flagOf(rowId: string, i: number): string {
   const l = clen[rowId]?.[i] ?? lens[rowId] ?? 1;
   const p = cpick[rowId]?.[i];
+  const semi = csemis[rowId]?.[i] ?? 0;
   let s = '';
   if (l !== 1) s = l === 0.5 ? '½' : '¼';
   if (p) s = s ? `${s} ${p}` : p;
+  if (semi !== 0) s = s ? `${s} ${semi > 0 ? '+' : ''}${semi}` : `${semi > 0 ? '+' : ''}${semi}`;
   return s;
 }
 
@@ -417,6 +430,17 @@ onBeforeUnmount(stop);
             min="0"
             max="1"
             step="0.05"
+            @change="auditionCell"
+          />
+        </label>
+        <label class="cell-editor__vol">
+          <span>Augstums {{ (csemis[editing.rowId][editing.i] ?? 0) > 0 ? '+' : '' }}{{ csemis[editing.rowId][editing.i] ?? 0 }}</span>
+          <input
+            v-model.number="csemis[editing.rowId][editing.i]"
+            type="range"
+            min="-12"
+            max="12"
+            step="1"
             @change="auditionCell"
           />
         </label>

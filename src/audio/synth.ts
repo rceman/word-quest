@@ -152,17 +152,18 @@ function noise(ctx: Ctx, t: number, dur: number, peak: number, filterFreq: numbe
   src.stop(t + dur + 0.1);
 }
 
-export function playSound(ctx: Ctx, id: string, t: number, stepDur: number, vol = 1): void {
+export function playSound(ctx: Ctx, id: string, t: number, stepDur: number, vol = 1, semis = 0): void {
   const out = ctx.createGain();
   out.gain.setValueAtTime(vol, t);
   out.connect(ctx.destination);
+  const m = Math.pow(SEMI, semis);
   switch (id) {
     case 'kick': {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = 'sine';
-      o.frequency.setValueAtTime(160, t);
-      o.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+      o.frequency.setValueAtTime(160 * m, t);
+      o.frequency.exponentialRampToValueAtTime(45 * m, t + 0.12);
       env(g, t, 0.9, 0.002, 0.22);
       o.connect(g).connect(out);
       o.start(t);
@@ -171,7 +172,7 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number, vol 
     }
     case 'snare':
       noise(ctx, t, 0.12, 0.5, 1800, 'highpass', out);
-      osc(ctx, 'triangle', 190, t, 0.08, 0.35, out);
+      osc(ctx, 'triangle', 190 * m, t, 0.08, 0.35, out);
       return;
     case 'hihat':
       noise(ctx, t, 0.04, 0.3, 7000, 'highpass', out);
@@ -185,8 +186,8 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number, vol 
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = 'sine';
-      o.frequency.setValueAtTime(300, t);
-      o.frequency.exponentialRampToValueAtTime(950, t + 0.12);
+      o.frequency.setValueAtTime(300 * m, t);
+      o.frequency.exponentialRampToValueAtTime(950 * m, t + 0.12);
       env(g, t, 0.45, 0.01, 0.15);
       o.connect(g).connect(out);
       o.start(t);
@@ -197,8 +198,8 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number, vol 
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = 'sawtooth';
-      o.frequency.setValueAtTime(900, t);
-      o.frequency.exponentialRampToValueAtTime(90, t + 0.18);
+      o.frequency.setValueAtTime(900 * m, t);
+      o.frequency.exponentialRampToValueAtTime(90 * m, t + 0.18);
       env(g, t, 0.35, 0.005, 0.2);
       o.connect(g).connect(out);
       o.start(t);
@@ -206,8 +207,8 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number, vol 
       return;
     }
     case 'fx-coin':
-      osc(ctx, 'sine', 988, t, 0.06, 0.4, out);
-      osc(ctx, 'sine', 1319, t + 0.07, 0.18, 0.4, out);
+      osc(ctx, 'sine', 988 * m, t, 0.06, 0.4, out);
+      osc(ctx, 'sine', 1319 * m, t + 0.07, 0.18, 0.4, out);
       return;
     case 'fx-boing': {
       const o = ctx.createOscillator();
@@ -215,7 +216,7 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number, vol 
       const lfo = ctx.createOscillator();
       const lg = ctx.createGain();
       o.type = 'triangle';
-      o.frequency.setValueAtTime(180, t);
+      o.frequency.setValueAtTime(180 * m, t);
       lfo.frequency.setValueAtTime(28, t);
       lg.gain.setValueAtTime(60, t);
       lfo.connect(lg).connect(o.frequency);
@@ -245,15 +246,16 @@ export function playSound(ctx: Ctx, id: string, t: number, stepDur: number, vol 
       return;
     }
     case 'fx-pop':
-      osc(ctx, 'sine', 520, t, 0.05, 0.5, out);
+      osc(ctx, 'sine', 520 * m, t, 0.05, 0.5, out);
       noise(ctx, t, 0.03, 0.25, 4000, 'highpass', out);
       return;
     default:
       break;
   }
 
-  const f = NOTE_MAP[id];
-  if (f === undefined) return;
+  const base = NOTE_MAP[id];
+  if (base === undefined) return;
+  const f = base * m;
 
   if (id.startsWith('bass-')) {
     osc(ctx, 'triangle', f, t, Math.min(stepDur * 0.9, 0.4), 0.55, out);
