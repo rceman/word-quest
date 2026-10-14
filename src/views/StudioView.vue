@@ -12,11 +12,14 @@ interface SavedState {
   cells: Record<string, boolean[]>;
   /** Per-row sound pick for 'word'/'letter' tracks; '' = random. */
   pick: Record<string, string>;
+  /** Per-row note length as a fraction of a step: 1, 0.5 or 0.25. */
+  lens: Record<string, number>;
 }
 
 const bpm = ref(100);
 const cells = reactive<Record<string, boolean[]>>({});
 const pick = reactive<Record<string, string>>({});
+const lens = reactive<Record<string, number>>({});
 const playing = ref(false);
 const currentStep = ref(-1);
 
@@ -38,13 +41,14 @@ function load() {
         cells[r.id] = Array.from({ length: STEP_COUNT }, (_, i) => Boolean(saved?.[i]));
       }
     for (const k of Object.keys(s.pick ?? {})) pick[k] = s.pick[k];
+    for (const k of Object.keys(s.lens ?? {})) lens[k] = s.lens[k];
   } catch {
     /* corrupted save — start clean */
   }
 }
 
 function save() {
-  const snapshot: SavedState = { bpm: bpm.value, cells: {}, pick: { ...pick } };
+  const snapshot: SavedState = { bpm: bpm.value, cells: {}, pick: { ...pick }, lens: { ...lens } };
   for (const g of TRACK_GROUPS)
     for (const r of g.rows) snapshot.cells[r.id] = [...(cells[r.id] ?? [])];
   try {
@@ -55,8 +59,11 @@ function save() {
 }
 
 load();
+for (const g of TRACK_GROUPS)
+  for (const r of g.rows) if (lens[r.id] == null) lens[r.id] = 1;
 watch(cells, save, { deep: true });
 watch(pick, save, { deep: true });
+watch(lens, save, { deep: true });
 watch(bpm, save);
 
 // ---------- audio engine ----------
@@ -80,9 +87,18 @@ function triggerStep(s: number, when: number) {
   for (const g of TRACK_GROUPS) {
     for (const r of g.rows) {
       if (!cells[r.id]?.[s]) continue;
-      if (r.kind === 'word') speech.speak(pick[r.id] || randomWord());
-      else if (r.kind === 'letter') speech.speak(pick[r.id] || randomLetter());
-      else if (ctx) playSound(ctx, r.id, when, stepDur.value);
+      const frac = lens[r.id] ?? 1;
+      if (r.kind === 'word' || r.kind === 'letter') {
+        const text = pick[r.id] || (r.kind === 'word' ? randomWord() : randomLetter());
+        speech.speak(text);
+        // Trim spoken audio for short notes: cut the tail of the word.
+        const ms = 800 * frac;
+        setTimeout(() => {
+          if (frac < 1) speech.stop();
+        }, ms);
+      } else if (ctx) {
+        playSound(ctx, r.id, when, stepDur.value * frac);
+      }
     }
   }
 }
@@ -132,7 +148,7 @@ function tapCell(rowId: string, i: number) {
   // Audition the sound immediately on tap-on so kids hear what they placed.
   if (row[i] && ctx) {
     const def = TRACK_GROUPS.flatMap((g) => g.rows).find((r) => r.id === rowId);
-    if (!def?.kind) playSound(ctx, rowId, ctx.currentTime, stepDur.value);
+    if (!def?.kind) playSound(ctx, rowId, ctx.currentTime, stepDur.value * (lens[rowId] ?? 1));
   }
 }
 
@@ -205,6 +221,16 @@ onBeforeUnmount(stop);
               </option>
             </select>
             <template v-else>{{ r.label }}</template>
+            <select
+              v-model.number="lens[r.id]"
+              class="track-pick track-pick--len"
+              :aria-label="`Nots garums rindai ${r.label}`"
+              @click.stop
+            >
+              <option :value="1">𝅘𝅥</option>
+              <option :value="0.5">½</option>
+              <option :value="0.25">¼</option>
+            </select>
           </span>
           <button
             v-for="i in STEP_COUNT"

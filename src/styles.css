@@ -1339,9 +1339,12 @@ button:disabled {
   font-size: 0.9rem;
   font-weight: 800;
   color: var(--ink-soft);
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
 }
 
 .cell {
