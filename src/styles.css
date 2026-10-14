@@ -1262,3 +1262,133 @@ button:disabled {
 .btn--wide {
   width: 100%;
 }
+
+/* ---------- music studio ---------- */
+
+.studio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 20px;
+}
+
+.studio-controls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.studio-play {
+  min-width: 150px;
+}
+
+.studio-tempo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  color: var(--navy-deep);
+  font-family: var(--font-display);
+}
+
+.studio-tempo input[type='range'] {
+  width: 180px;
+  accent-color: var(--teal);
+}
+
+.step-head,
+.track-row {
+  display: grid;
+  grid-template-columns: minmax(74px, 90px) repeat(8, 1fr);
+  gap: 6px;
+  align-items: center;
+}
+
+.step-head {
+  margin-bottom: 2px;
+}
+
+.step-num {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+.track-group {
+  background: var(--card);
+  border: 2px solid var(--edge);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.track-group__title {
+  margin: 0 0 2px;
+  font-size: 1rem;
+  color: var(--navy-deep);
+  font-family: var(--font-display);
+}
+
+.track-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cell {
+  height: 46px;
+  border-radius: 10px;
+  border: 2px solid var(--edge);
+  background: #f7f2e4;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.05s ease;
+}
+
+.cell:active {
+  transform: scale(0.92);
+}
+
+.cell--on {
+  border-color: transparent;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+
+.cell--drums.cell--on { background: #f97316; }
+.cell--bass.cell--on { background: #7c3aed; }
+.cell--pad.cell--on { background: #0ea5e9; }
+.cell--melody.cell--on { background: #e5484d; }
+.cell--fx.cell--on { background: #eab308; }
+.cell--words.cell--on { background: #10b981; }
+
+.cell--playhead:not(.cell--on) {
+  background: #e9f6e8;
+}
+
+.cell--playhead {
+  border-color: var(--navy-deep);
+  box-shadow: 0 0 0 3px rgba(21, 58, 104, 0.25);
+}
+
+@media (orientation: landscape) {
+  .cell {
+    height: 38px;
+  }
+
+  .track-group {
+    padding: 8px 10px;
+  }
+
+  .studio-controls {
+    gap: 14px;
+  }
+}

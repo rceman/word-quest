@@ -11,7 +11,8 @@ export type RouteName =
   | 'quiz'
   | 'review'
   | 'results'
-  | 'progress';
+  | 'progress'
+  | 'studio';
 
 export interface Route {
   name: RouteName;
@@ -30,6 +31,8 @@ function parseHash(hash: string): Route {
       const lesson = Number(parts[1]);
       return { name: 'quiz', lesson: [1, 3, 5].includes(lesson) ? lesson : 1 };
     }
+    case 'studio':
+      return { name: 'studio' };
     case 'review':
       return { name: 'review' };
     case 'results':

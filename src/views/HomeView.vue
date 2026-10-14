@@ -69,6 +69,19 @@ function confirmReset() {
       <button
         type="button"
         class="icon-btn"
+        aria-label="Muzikālais darbnīca"
+        title="Muzikālais darbnīca"
+        @click="navigate({ name: 'studio' })"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M9 18V5l10-2v11.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="6.5" cy="18" r="2.5" fill="currentColor"/>
+          <circle cx="16.5" cy="14.5" r="2.5" fill="currentColor"/>
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="icon-btn"
         aria-label="Mans progress"
         title="Mans progress"
         @click="navigate({ name: 'progress' })"
